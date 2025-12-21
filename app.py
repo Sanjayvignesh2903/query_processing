@@ -3,33 +3,44 @@ import joblib
 import streamlit as st
 from pathlib import Path
 
+# --------- PAGE CONFIG ----------
 st.set_page_config(
     page_title="Intelligent Traffic Accident Severity Predictor",
     layout="wide"
 )
 
+# --------- FILE PATHS (RELATIVE) ----------
 DATA_PATH = "dataset_traffic_accident_prediction1_clean.csv"
 MODEL_PATH = "rf_model.pkl"
-BACKGROUND_IMAGE = "background.png"     # file next to app.py
+BACKGROUND_IMAGE = "background.png"   # file in same repo
 
-# ---------- CSS WITH CORRECT SELECTOR ----------
-bg_path = Path(BACKGROUND_IMAGE).as_posix()  # relative path
+# --------- CUSTOM CSS: BACKGROUND + COLORS ----------
+bg_path = Path(BACKGROUND_IMAGE).as_posix()
+
 st.markdown(
     f"""
     <style>
-    /* set background on main app container */
+    /* Main app background image */
     [data-testid="stAppViewContainer"] {{
         background: url("{bg_path}") no-repeat center center fixed;
         background-size: cover;
     }}
 
-    [data-testid="stSidebar"] > div {{
-        background: rgba(0, 0, 0, 0.92);
-        border-right: 1px solid #00E5FF;
+    /* Dark overlay for content */
+    .main-overlay {{
+        background: linear-gradient(
+            to bottom right,
+            rgba(0, 0, 0, 0.82),
+            rgba(0, 0, 0, 0.90)
+        );
+        padding: 24px 32px;
+        border-radius: 18px;
+        border: 1px solid #00E5FF;   /* Primary accent cyan */
+        box-shadow: 0 0 28px rgba(0, 0, 0, 0.9);
     }}
 
     html, body, [class*="css"] {{
-        color: #FFFFFF;
+        color: #FFFFFF;              /* Primary text white */
         font-family: "Segoe UI", sans-serif;
     }}
 
@@ -38,19 +49,26 @@ st.markdown(
         font-weight: 800;
     }}
 
-    .main-overlay {{
-        background: rgba(0, 0, 0, 0.82);
-        padding: 24px 32px;
-        border-radius: 18px;
-        border: 1px solid #00E5FF;
-        box-shadow: 0 0 28px rgba(0, 0, 0, 0.9);
+    .accent-safe {{
+        color: #00E5FF;              /* Safe / primary accent */
     }}
 
     .secondary-text {{
-        color: #B0BEC5;
+        color: #B0BEC5;              /* Secondary text */
         font-size: 0.9rem;
     }}
 
+    /* Sidebar styling */
+    section[data-testid="stSidebar"] > div {{
+        background: rgba(0, 0, 0, 0.95);
+        border-right: 1px solid #00E5FF;
+    }}
+    section[data-testid="stSidebar"] label,
+    section[data-testid="stSidebar"] span {{
+        color: #FFFFFF !important;
+    }}
+
+    /* Buttons */
     .stButton > button {{
         background-color: #00E5FF;
         color: #000000;
@@ -59,16 +77,30 @@ st.markdown(
         font-weight: 600;
     }}
     .stButton > button:hover {{
-        background-color: #FF3D00;
+        background-color: #FF3D00;   /* Warning / risk */
         color: #FFFFFF;
         border-color: #FF6E40;
+    }}
+
+    /* Risk colors */
+    .risk-high {{
+        color: #FF3D00;              /* Neon red */
+        font-weight: 700;
+    }}
+    .risk-medium {{
+        color: #FFC107;              /* Amber caution */
+        font-weight: 700;
+    }}
+    .risk-low {{
+        color: #00E5FF;              /* Cyan safe */
+        font-weight: 700;
     }}
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# ---------- LOAD DATA & MODEL ----------
+# --------- LOAD DATA & MODEL ----------
 @st.cache_data
 def load_data():
     return pd.read_csv(DATA_PATH)
@@ -80,9 +112,13 @@ def load_model():
 df = load_data()
 model = load_model()
 
-# ---------- UI ----------
+# --------- MAIN UI ----------
 st.markdown('<div class="main-overlay">', unsafe_allow_html=True)
-st.title("Intelligent Traffic Accident Severity Predictor")
+
+st.markdown(
+    '<h1>Intelligent Traffic Accident Severity Predictor</h1>',
+    unsafe_allow_html=True,
+)
 st.markdown(
     '<p class="secondary-text">Leverage real-time conditions to estimate accident severity across complex traffic networks.</p>',
     unsafe_allow_html=True,
@@ -90,6 +126,7 @@ st.markdown(
 
 st.sidebar.title("Input Conditions")
 
+# Sidebar inputs
 weather = st.sidebar.selectbox("Weather", sorted(df["Weather"].unique()))
 road_type = st.sidebar.selectbox("Road Type", sorted(df["Road_Type"].unique()))
 time_of_day = st.sidebar.selectbox("Time of Day", sorted(df["Time_of_Day"].unique()))
@@ -135,6 +172,7 @@ driver_exp = st.sidebar.slider(
 )
 accident_flag = st.sidebar.selectbox("Accident Flag (0 = No, 1 = Yes)", [0, 1])
 
+# Input row
 input_dict = {
     "Weather": weather,
     "Road_Type": road_type,
@@ -155,11 +193,34 @@ input_df = pd.DataFrame([input_dict])
 st.subheader("Current Input Snapshot")
 st.dataframe(input_df, use_container_width=True)
 
+# Prediction
 if st.button("Run Severity Prediction"):
     pred = model.predict(input_df)[0]
     proba = model.predict_proba(input_df)[0]
-    st.subheader(f"Predicted Severity: {pred}")
-    for cls, p in zip(model.classes_, proba):
-        st.write(f"{cls}: {p:.2%}")
+    classes = list(model.classes_)
+
+    if pred == "High":
+        risk_class = "risk-high"
+    elif pred == "Moderate":
+        risk_class = "risk-medium"
+    else:
+        risk_class = "risk-low"
+
+    st.markdown(
+        f'<h2 class="{risk_class}">Predicted Severity: {pred}</h2>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown('<h3 class="accent-safe">Class Probabilities</h3>', unsafe_allow_html=True)
+    for cls, p in zip(classes, proba):
+        color_class = (
+            "risk-high" if cls == "High"
+            else "risk-medium" if cls == "Moderate"
+            else "risk-low"
+        )
+        st.markdown(
+            f'<p class="{color_class}">{cls}: {p:.2%}</p>',
+            unsafe_allow_html=True,
+        )
 
 st.markdown('</div>', unsafe_allow_html=True)

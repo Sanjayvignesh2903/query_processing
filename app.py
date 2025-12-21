@@ -3,30 +3,26 @@ import joblib
 import streamlit as st
 from pathlib import Path
 
-# ---------- PAGE CONFIG ----------
 st.set_page_config(
     page_title="Intelligent Traffic Accident Severity Predictor",
     layout="wide"
 )
 
-# ---------- RELATIVE PATHS ----------
 DATA_PATH = "dataset_traffic_accident_prediction1_clean.csv"
-MODEL_PATH = "rf_model.pkl"          # IMPORTANT: file must be named exactly this in repo
-BACKGROUND_IMAGE = "background.png"  # image file in repo
+MODEL_PATH = "rf_model.pkl"          # must match the .pkl file in repo
+BACKGROUND_IMAGE = "background.png"  # your highway image
 
-# ---------- CSS: BACKGROUND + THEME ----------
+# ----- CSS for background + colors -----
 bg_path = Path(BACKGROUND_IMAGE).as_posix()
 
 st.markdown(
     f"""
     <style>
-    /* App background image */
     [data-testid="stAppViewContainer"] {{
         background: url("{bg_path}") no-repeat center center fixed;
         background-size: cover;
     }}
 
-    /* Dark overlay around main content */
     .main-overlay {{
         background: linear-gradient(
             to bottom right,
@@ -35,12 +31,12 @@ st.markdown(
         );
         padding: 24px 32px;
         border-radius: 18px;
-        border: 1px solid #00E5FF;   /* Primary accent (cyan) */
+        border: 1px solid #00E5FF;
         box-shadow: 0 0 28px rgba(0, 0, 0, 0.9);
     }}
 
     html, body, [class*="css"] {{
-        color: #FFFFFF;              /* Primary text white */
+        color: #FFFFFF;
         font-family: "Segoe UI", sans-serif;
     }}
 
@@ -49,16 +45,9 @@ st.markdown(
         font-weight: 800;
     }}
 
-    .accent-safe {{
-        color: #00E5FF;              /* Safe / primary accent */
-    }}
+    .accent-safe {{ color: #00E5FF; }}
+    .secondary-text {{ color: #B0BEC5; font-size: 0.9rem; }}
 
-    .secondary-text {{
-        color: #B0BEC5;              /* Secondary text grey */
-        font-size: 0.9rem;
-    }}
-
-    /* Sidebar styling */
     section[data-testid="stSidebar"] > div {{
         background: rgba(0, 0, 0, 0.95);
         border-right: 1px solid #00E5FF;
@@ -68,7 +57,6 @@ st.markdown(
         color: #FFFFFF !important;
     }}
 
-    /* Buttons */
     .stButton > button {{
         background-color: #00E5FF;
         color: #000000;
@@ -77,30 +65,20 @@ st.markdown(
         font-weight: 600;
     }}
     .stButton > button:hover {{
-        background-color: #FF3D00;   /* Neon red warning */
+        background-color: #FF3D00;
         color: #FFFFFF;
         border-color: #FF6E40;
     }}
 
-    /* Risk colors */
-    .risk-high {{
-        color: #FF3D00;              /* High risk */
-        font-weight: 700;
-    }}
-    .risk-medium {{
-        color: #FFC107;              /* Caution */
-        font-weight: 700;
-    }}
-    .risk-low {{
-        color: #00E5FF;              /* Safe */
-        font-weight: 700;
-    }}
+    .risk-high {{ color: #FF3D00; font-weight: 700; }}
+    .risk-medium {{ color: #FFC107; font-weight: 700; }}
+    .risk-low {{ color: #00E5FF; font-weight: 700; }}
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# ---------- LOAD DATA & MODEL ----------
+# ----- Load data and model -----
 @st.cache_data
 def load_data():
     return pd.read_csv(DATA_PATH)
@@ -112,7 +90,7 @@ def load_model():
 df = load_data()
 model = load_model()
 
-# ---------- MAIN UI ----------
+# ----- UI -----
 st.markdown('<div class="main-overlay">', unsafe_allow_html=True)
 
 st.markdown(
@@ -126,7 +104,6 @@ st.markdown(
 
 st.sidebar.title("Input Conditions")
 
-# Sidebar inputs
 weather = st.sidebar.selectbox("Weather", sorted(df["Weather"].unique()))
 road_type = st.sidebar.selectbox("Road Type", sorted(df["Road_Type"].unique()))
 time_of_day = st.sidebar.selectbox("Time of Day", sorted(df["Time_of_Day"].unique()))
@@ -172,7 +149,6 @@ driver_exp = st.sidebar.slider(
 )
 accident_flag = st.sidebar.selectbox("Accident Flag (0 = No, 1 = Yes)", [0, 1])
 
-# Build input row
 input_dict = {
     "Weather": weather,
     "Road_Type": road_type,
@@ -193,7 +169,6 @@ input_df = pd.DataFrame([input_dict])
 st.subheader("Current Input Snapshot")
 st.dataframe(input_df, use_container_width=True)
 
-# Prediction
 if st.button("Run Severity Prediction"):
     pred = model.predict(input_df)[0]
     proba = model.predict_proba(input_df)[0]

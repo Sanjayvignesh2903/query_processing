@@ -3,39 +3,39 @@ import joblib
 import streamlit as st
 from pathlib import Path
 
-# --------- PAGE CONFIG ----------
+# ---------- PAGE CONFIG ----------
 st.set_page_config(
     page_title="Intelligent Traffic Accident Severity Predictor",
     layout="wide"
 )
 
-# --------- FILE PATHS (RELATIVE) ----------
+# ---------- RELATIVE PATHS ----------
 DATA_PATH = "dataset_traffic_accident_prediction1_clean.csv"
-MODEL_PATH = "rf_model.pkl"
-BACKGROUND_IMAGE = "background.png"   # file in same repo
+MODEL_PATH = "rf_model.pkl"          # IMPORTANT: file must be named exactly this in repo
+BACKGROUND_IMAGE = "background.png"  # image file in repo
 
-# --------- CUSTOM CSS: BACKGROUND + COLORS ----------
+# ---------- CSS: BACKGROUND + THEME ----------
 bg_path = Path(BACKGROUND_IMAGE).as_posix()
 
 st.markdown(
     f"""
     <style>
-    /* Main app background image */
+    /* App background image */
     [data-testid="stAppViewContainer"] {{
         background: url("{bg_path}") no-repeat center center fixed;
         background-size: cover;
     }}
 
-    /* Dark overlay for content */
+    /* Dark overlay around main content */
     .main-overlay {{
         background: linear-gradient(
             to bottom right,
             rgba(0, 0, 0, 0.82),
-            rgba(0, 0, 0, 0.90)
+            rgba(0, 0, 0, 0.92)
         );
         padding: 24px 32px;
         border-radius: 18px;
-        border: 1px solid #00E5FF;   /* Primary accent cyan */
+        border: 1px solid #00E5FF;   /* Primary accent (cyan) */
         box-shadow: 0 0 28px rgba(0, 0, 0, 0.9);
     }}
 
@@ -54,7 +54,7 @@ st.markdown(
     }}
 
     .secondary-text {{
-        color: #B0BEC5;              /* Secondary text */
+        color: #B0BEC5;              /* Secondary text grey */
         font-size: 0.9rem;
     }}
 
@@ -77,22 +77,22 @@ st.markdown(
         font-weight: 600;
     }}
     .stButton > button:hover {{
-        background-color: #FF3D00;   /* Warning / risk */
+        background-color: #FF3D00;   /* Neon red warning */
         color: #FFFFFF;
         border-color: #FF6E40;
     }}
 
     /* Risk colors */
     .risk-high {{
-        color: #FF3D00;              /* Neon red */
+        color: #FF3D00;              /* High risk */
         font-weight: 700;
     }}
     .risk-medium {{
-        color: #FFC107;              /* Amber caution */
+        color: #FFC107;              /* Caution */
         font-weight: 700;
     }}
     .risk-low {{
-        color: #00E5FF;              /* Cyan safe */
+        color: #00E5FF;              /* Safe */
         font-weight: 700;
     }}
     </style>
@@ -100,7 +100,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# --------- LOAD DATA & MODEL ----------
+# ---------- LOAD DATA & MODEL ----------
 @st.cache_data
 def load_data():
     return pd.read_csv(DATA_PATH)
@@ -112,7 +112,7 @@ def load_model():
 df = load_data()
 model = load_model()
 
-# --------- MAIN UI ----------
+# ---------- MAIN UI ----------
 st.markdown('<div class="main-overlay">', unsafe_allow_html=True)
 
 st.markdown(
@@ -172,7 +172,7 @@ driver_exp = st.sidebar.slider(
 )
 accident_flag = st.sidebar.selectbox("Accident Flag (0 = No, 1 = Yes)", [0, 1])
 
-# Input row
+# Build input row
 input_dict = {
     "Weather": weather,
     "Road_Type": road_type,

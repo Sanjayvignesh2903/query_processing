@@ -1,6 +1,6 @@
 streamlit
 pandas
 joblib
-scikit-learn
-imbalanced-learn
+scikit-learn==1.5.2  # Change this to your version
+imbalanced-learn==0.12.3 # Change this to your version
 altair
